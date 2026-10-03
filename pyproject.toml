@@ -1,0 +1,18 @@
+[project]
+name = "mac-moss"
+version = "0.2.0"
+description = "An improved MOSS Note derivative for local transcription on Apple Silicon Macs"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "python-multipart>=0.0.20,<1",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.urls]
+"Original project" = "https://github.com/JoNebula/moss-note"
+"Base fork" = "https://github.com/jiseungjeong/moss-note"

@@ -1,0 +1,29 @@
+# Local runtimes and caches
+.venv*/
+.cache/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Build and coverage output
+build/
+dist/
+*.egg-info/
+.coverage
+.coverage.*
+htmlcov/
+
+# macOS metadata
+.DS_Store
+
+# Private recordings, notes, model weights, and logs
+data/
+models/
+logs/
+
+# Local configuration and credentials; keep the public example
+.env
+.env.*
+!.env.example

@@ -1,0 +1,1 @@
+"""Mac MOSS application package."""

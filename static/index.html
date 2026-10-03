@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f7f2" />
+    <title>Mac MOSS</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css?v=scrollbar-20261014" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" id="go-home" href="/" aria-label="Mac MOSS 홈으로 이동">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span>MAC <b>MOSS</b></span>
+        </a>
+
+        <button class="new-note" id="open-upload">
+          <span>＋</span> 새 노트 만들기
+        </button>
+
+        <label class="search-box">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.15a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" /></svg>
+          <input id="note-search" type="search" placeholder="노트 검색" aria-label="노트 검색" />
+        </label>
+
+        <div class="side-label"><span>내 노트</span><span id="note-count">0</span></div>
+        <div class="note-list" id="note-list"></div>
+
+        <div class="server-state" id="server-state">
+          <span class="state-dot"></span>
+          <div><b>모델 확인 중</b><small>MLX · Apple GPU</small></div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="welcome" id="welcome">
+          <div class="welcome-orbit"><span></span><i></i><i></i><i></i></div>
+          <p class="eyebrow">내 Mac에서 만드는 음성 기록</p>
+          <h1>말하는 순간을<br /><em>기록으로.</em></h1>
+          <p>회의, 인터뷰, 강의를 올리면 화자와 시간을 구분해<br />검색하고 다듬을 수 있는 노트로 바꿉니다.</p>
+          <button class="primary-action" id="welcome-upload">첫 녹음 올리기 <span>→</span></button>
+          <div class="feature-row">
+            <span>다국어 전사</span><i></i><span>화자 분리</span><i></i><span>긴 녹음 자동 분할</span><i></i><span>로컬 처리</span>
+          </div>
+        </section>
+
+        <section class="workspace hidden" id="workspace">
+          <header class="workspace-header">
+            <div>
+              <input class="note-title" id="note-title" maxlength="200" aria-label="노트 제목" />
+              <div class="note-meta" id="note-meta"></div>
+            </div>
+            <div class="header-actions">
+              <div class="export-menu">
+                <button class="ghost-button" id="export-toggle" aria-expanded="false" aria-controls="export-options">
+                  <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 15v5h14v-5" /></svg>
+                  <span>내보내기</span>
+                  <svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+                </button>
+                <div class="export-options" id="export-options" aria-label="내보내기 형식">
+                  <button data-format="txt">텍스트 (.txt)</button>
+                  <button data-format="srt">자막 (.srt)</button>
+                  <button data-format="vtt">웹 자막 (.vtt)</button>
+                  <button data-format="json">데이터 (.json)</button>
+                </div>
+              </div>
+              <button class="icon-button danger" id="delete-note" aria-label="노트 삭제" title="노트 삭제">
+                <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="processing-card hidden" id="processing-card" role="status" aria-live="polite">
+            <div class="processing-heading">
+              <div class="processing-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="processing-copy"><b id="processing-title">음성을 읽고 있어요</b><p id="processing-copy">화자와 문장을 나누고 있습니다.</p></div>
+            </div>
+            <div class="processing-progress" id="processing-progress">
+              <div class="progress-summary"><span id="progress-stage">전사 준비</span><strong id="progress-percent">준비 중</strong></div>
+              <div class="progress-track" id="progress-track" role="progressbar" aria-label="전사 작업 진행률" aria-valuemin="0" aria-valuemax="100"><div id="progress-fill"></div></div>
+              <div class="progress-stats"><span id="progress-count"></span><span id="progress-audio"></span><span class="progress-elapsed hidden" id="progress-elapsed"></span></div>
+              <div class="model-progress hidden" id="model-progress">
+                <p id="model-progress-text"></p>
+                <div class="progress-track hidden" id="prefill-track" role="progressbar" aria-label="음성 입력 처리 진행률" aria-valuemin="0" aria-valuemax="100"><div id="prefill-fill"></div></div>
+              </div>
+              <ol class="processing-steps" id="processing-steps" aria-label="전사 진행 단계">
+                <li data-step="0"><i aria-hidden="true"></i><span>준비</span></li>
+                <li data-step="1"><i aria-hidden="true"></i><span>음성 전사</span></li>
+                <li data-step="2"><i aria-hidden="true"></i><span>화자 정리</span></li>
+                <li data-step="3"><i aria-hidden="true"></i><span>완료</span></li>
+              </ol>
+              <p class="progress-detail" id="progress-detail">전사된 녹음 시간을 기준으로 진행률을 표시합니다.</p>
+            </div>
+            <div class="processing-actions">
+              <button class="ghost-button danger hidden" id="cancel-transcription" type="button">전사 취소</button>
+              <button class="ghost-button restart-button hidden" id="restart-transcription" type="button">전사 다시 시작</button>
+            </div>
+          </div>
+
+          <div class="editor hidden" id="editor">
+            <div class="player-card">
+              <audio id="media-player" controls preload="metadata"></audio>
+              <div class="player-info">
+                <span class="file-pill" id="file-pill"></span>
+                <span id="duration-label"></span>
+                <span class="hidden" id="transcription-time"></span>
+              </div>
+            </div>
+
+            <div class="transcript-views" id="transcript-views">
+              <button class="active" data-transcript-view="edited" aria-pressed="true">편집본</button>
+              <button data-transcript-view="raw" aria-pressed="false">전사 원본</button>
+              <span id="editing-hint">본문과 화자 이름을 눌러 수정할 수 있습니다.</span>
+            </div>
+
+            <div class="editor-toolbar">
+              <label class="transcript-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.15a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" /></svg>
+                <input id="transcript-search" type="search" placeholder="내용 또는 화자 검색" aria-label="내용 또는 화자 검색" />
+              </label>
+              <span id="segment-count"></span>
+              <span class="save-state" id="save-state" role="status">저장됨</span>
+              <button class="retry-save hidden" id="retry-save">저장 재시도</button>
+            </div>
+
+            <div class="chunk-notice hidden" id="chunk-notice"></div>
+            <div class="speaker-panel" id="speaker-panel"></div>
+            <div class="segments" id="segments"></div>
+            <p class="transcript-empty hidden" id="transcript-empty" role="status"></p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="upload-dialog" aria-labelledby="upload-title">
+      <form id="upload-form">
+        <div class="dialog-head">
+          <div><p class="eyebrow">새로운 음성 기록</p><h2 id="upload-title">새 노트 만들기</h2></div>
+          <button type="button" class="dialog-close" id="close-upload" aria-label="업로드 창 닫기">×</button>
+        </div>
+        <label class="drop-zone" id="drop-zone">
+          <input id="audio-file" name="file" type="file" accept="audio/*,video/*" aria-labelledby="drop-title" aria-describedby="drop-copy" required />
+          <span class="upload-icon">↥</span>
+          <b id="drop-title">파일을 선택하거나 여기에 놓으세요</b>
+          <small id="drop-copy">MP3, WAV, M4A, MP4 등 · 긴 녹음은 자동 분할</small>
+        </label>
+        <div class="upload-preparation hidden" id="upload-preparation" role="status" aria-live="polite">
+          <strong id="upload-duration">음성 길이 확인 중…</strong>
+          <span id="upload-preparation-status">파일 업로드 중…</span>
+          <button type="button" class="hidden" id="retry-preparation">다시 시도</button>
+        </div>
+        <label class="field"><span>노트 제목 <small>선택</small></span><input name="title" placeholder="파일명으로 자동 생성" maxlength="200" /></label>
+        <label class="field">
+          <span>청크 길이 <small>분</small></span>
+          <input id="chunk-minutes" name="chunk_minutes" type="number" min="1" max="90" step="1" value="30" aria-describedby="chunk-length-help" required />
+          <small class="field-help" id="chunk-length-help">1~90분 · 이 길이를 넘는 녹음은 나누어 전사합니다.</small>
+        </label>
+        <div class="field-row">
+          <label class="field"><span>주 언어</span><select name="language"><option value="ko">한국어</option><option value="en">English</option><option value="ja">日本語</option><option value="zh">中文</option><option value="">자동 감지</option></select></label>
+          <label class="field"><span>중요 단어 <small>선택</small></span><input name="hotwords" placeholder="프로젝트명, 이름" /></label>
+        </div>
+        <p class="privacy-note"><span>◆</span> 음성과 전사 결과는 내 Mac에서 처리하고 저장합니다.</p>
+        <button class="submit-upload" type="submit" disabled>전사 시작하기 <span>→</span></button>
+      </form>
+    </dialog>
+
+    <dialog class="confirmation-dialog" id="cancel-dialog" role="alertdialog" aria-modal="true" aria-labelledby="cancel-dialog-title" aria-describedby="cancel-dialog-description">
+      <button class="dialog-close" id="close-cancel-dialog" type="button" aria-label="취소 확인창 닫기">×</button>
+      <div class="confirmation-dialog-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2" /><circle cx="12" cy="12" r="9" /></svg>
+      </div>
+      <h2 id="cancel-dialog-title">정말 취소하시겠습니까?</h2>
+      <p id="cancel-dialog-description">진행 중인 전사 작업을 중단합니다.<br />녹음 파일은 보관되며, 나중에 처음부터 다시 전사할 수 있습니다.</p>
+      <div class="confirmation-dialog-note"><span>노트</span><strong id="cancel-dialog-note-title"></strong></div>
+      <div class="confirmation-dialog-actions">
+        <button class="ghost-button" id="keep-transcribing" type="button" autofocus>계속 전사</button>
+        <button class="confirm-danger" id="confirm-cancel-transcription" type="button">전사 취소</button>
+      </div>
+    </dialog>
+
+    <dialog class="confirmation-dialog" id="delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-description">
+      <button class="dialog-close" id="close-delete-dialog" type="button" aria-label="삭제 확인창 닫기">×</button>
+      <div class="confirmation-dialog-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </div>
+      <h2 id="delete-dialog-title">노트를 삭제하시겠습니까?</h2>
+      <p id="delete-dialog-description">노트와 녹음 파일을 함께 삭제합니다.<br />삭제한 항목은 복구할 수 없습니다.</p>
+      <div class="confirmation-dialog-note"><span>노트</span><strong id="delete-dialog-note-title"></strong></div>
+      <div class="confirmation-dialog-actions">
+        <button class="ghost-button" id="keep-note" type="button" autofocus>돌아가기</button>
+        <button class="confirm-danger" id="confirm-delete-note" type="button">삭제하기</button>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status"></div>
+    <script src="/app.js?v=restart-20261014" defer></script>
+  </body>
+</html>
