@@ -2,17 +2,11 @@
 
 from __future__ import annotations
 
-import re
 import time
 from types import MethodType
 from typing import Any, Callable
 
-
-SEGMENT = re.compile(
-    r"\[(?P<start>\d+(?:\.\d+)?)\]\[S\d+\].*?"
-    r"\[(?P<end>\d+(?:\.\d+)?)\]",
-    re.DOTALL,
-)
+from src.transcript import parse_transcript
 
 
 class ModelProgress:
@@ -28,10 +22,10 @@ class ModelProgress:
     def due(self) -> bool:
         return time.monotonic() - self.last_report >= 1
 
-    def observe_text(self, text: str) -> None:
+    def observe_text(self, text: str, *, partial: bool = True) -> None:
         duration = self.values["audio_duration"]
-        for match in SEGMENT.finditer(text):
-            start, end = float(match["start"]), float(match["end"])
+        for segment in parse_transcript(text, partial=partial):
+            start, end = segment["start"], segment["end"]
             if 0 <= start <= end <= duration:
                 self.values["audio_seconds"] = max(self.values["audio_seconds"], end)
 
@@ -100,7 +94,7 @@ def generate_with_progress(
     generation.generate_step = generate_step
     try:
         result = model.generate(audio_path, **generation_options)
-        progress.observe_text(result.text)
+        progress.observe_text(result.text, partial=False)
         progress.report(
             stage="complete", audio_seconds=progress.values["audio_duration"],
             generation_tokens=result.generation_tokens, force=True,
